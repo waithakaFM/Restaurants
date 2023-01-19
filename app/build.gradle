@@ -60,4 +60,15 @@ dependencies {
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_ui_version"
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_ui_version"
     debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_ui_version"
+
+    // To gain access to this special syntax to instantiate our RestaurantsViewModel
+    implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.4.1"
+
+    // Adding Retrofit to the Restaurants application
+    implementation "com.squareup.retrofit2:retrofit:2.9.0"
+
+    // GSON dependency for converting JSON strings into Java/Kotlin object and vice versa
+    implementation "com.google.code.gson:gson:2.8.6"
+    // Retrofit deserializes the JSON response
+    implementation "com.squareup.retrofit2:converter-gson:2.9.0"
 }

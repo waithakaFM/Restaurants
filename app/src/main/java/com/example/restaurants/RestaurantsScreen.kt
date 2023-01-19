@@ -1,6 +1,7 @@
 package com.example.restaurants
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -9,41 +10,52 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Place
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.restaurants.ui.theme.RestaurantsTheme
 
 @Composable
 fun RestaurantsScreen(){
-//    // TODO: adding scrolling to the column composable
-//    Column(Modifier.verticalScroll(rememberScrollState())) {
-//        dummyRestaurants.forEach { restaurant ->
-//            RestaurantItem(restaurant)
-//        }
+    val viewModel: RestaurantsViewModel = viewModel()
+
+    // trigger the network request to obtain the restaurants from the server
+    //TODO: add a LaunchedEffect to prevent our UI from asking for restaurants from
+    // ViewModel repeatedly on every recomposition
+//    LaunchedEffect(key1 = "request_restaurants") {
+//        viewModel.getRestaurants()
 //    }
 
-    // TODO: Using LazyColumn to display restaurants
     LazyColumn(
         contentPadding = PaddingValues(
             vertical = 8.dp,
             horizontal = 8.dp
         )
     ) {
-        items(dummyRestaurants) { restaurant ->
-            RestaurantItem(restaurant)
+        items(viewModel.state.value) { restaurant ->
+            RestaurantItem(restaurant){ id ->
+                viewModel.toggleFavorite(id)
+            }
         }
     }
 }
 
 @Composable
-fun RestaurantItem(item: Restaurant) {
-    // Card is similar to CardView
+fun RestaurantItem(item: Restaurant,
+                   onClick: (id: Int) -> Unit) {
+
+    val icon = if (item.isFavorite)
+        Icons.Filled.Favorite
+    else
+        Icons.Filled.FavoriteBorder
+
     Card(elevation = 2.dp,
         modifier = Modifier.padding(8.dp)
     ) {
@@ -52,22 +64,30 @@ fun RestaurantItem(item: Restaurant) {
             modifier = Modifier.padding(8.dp)) {
             RestaurantIcon(
                 Icons.Filled.Place,
-                // RestaurantIcon will take 15% of the horizontal space from its parent Row
                 Modifier.weight(0.15f))
             RestaurantDetails(
                 item.title,
                 item.description,
-                Modifier.weight(0.85f)
+                Modifier.weight(0.7f)
             )
+
+            RestaurantIcon(icon, Modifier.weight(0.15f)) {
+                onClick(item.id)
+            }
         }
     }
 }
 
 @Composable
-private fun RestaurantIcon(icon: ImageVector, modifier: Modifier){
+private fun RestaurantIcon(icon: ImageVector,
+                           modifier: Modifier,
+                           onClick: () -> Unit = { }){
     Image(imageVector = icon,
         contentDescription = "Restaurant icon",
         modifier = modifier.padding(8.dp)
+            .clickable {
+                onClick()
+            }
     )
 }
 
@@ -77,8 +97,6 @@ private fun RestaurantDetails(title: String, description: String,
         Column(modifier = modifier) {
         Text(text = title,
             style = MaterialTheme.typography.h6)
-        // to display the description that's faded out in contrast to the title
-        // the child Text with the restaurant description will be faded or grayed out
         CompositionLocalProvider(
             LocalContentAlpha provides
                     ContentAlpha.medium) {
@@ -87,6 +105,7 @@ private fun RestaurantDetails(title: String, description: String,
         }
     }
 }
+
 
 @Preview(showBackground = true)
 @Composable
