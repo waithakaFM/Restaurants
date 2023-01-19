@@ -24,16 +24,15 @@ import com.example.restaurants.ui.theme.RestaurantsTheme
 
 @Composable
 fun RestaurantsScreen(){
-    // TODO: Instantiate the ViewModel
     val viewModel: RestaurantsViewModel = viewModel()
 
-//    // TODO: Add a state object to the parent
-//    val state: MutableState<List<Restaurant>> =
-//        remember {
-//            mutableStateOf(viewModel.getRestaurants())
-//        }
+    // trigger the network request to obtain the restaurants from the server
+    //TODO: add a LaunchedEffect to prevent our UI from asking for restaurants from
+    // ViewModel repeatedly on every recomposition
+//    LaunchedEffect(key1 = "request_restaurants") {
+//        viewModel.getRestaurants()
+//    }
 
-    // TODO: Using LazyColumn to display restaurants and passing the state's value to the items constructor of LazyColumn
     LazyColumn(
         contentPadding = PaddingValues(
             vertical = 8.dp,
@@ -49,20 +48,14 @@ fun RestaurantsScreen(){
 }
 
 @Composable
-// TODO: Hoist the the state up
 fun RestaurantItem(item: Restaurant,
                    onClick: (id: Int) -> Unit) {
-
-    //TODO: Add state to the FavoriteIcon
-//    val favoriteState = remember {
-//        mutableStateOf(false) }
 
     val icon = if (item.isFavorite)
         Icons.Filled.Favorite
     else
         Icons.Filled.FavoriteBorder
 
-    // Card is similar to CardView
     Card(elevation = 2.dp,
         modifier = Modifier.padding(8.dp)
     ) {
@@ -71,7 +64,6 @@ fun RestaurantItem(item: Restaurant,
             modifier = Modifier.padding(8.dp)) {
             RestaurantIcon(
                 Icons.Filled.Place,
-                // RestaurantIcon will take 15% of the horizontal space from its parent Row
                 Modifier.weight(0.15f))
             RestaurantDetails(
                 item.title,
@@ -87,7 +79,6 @@ fun RestaurantItem(item: Restaurant,
 }
 
 @Composable
-// TODO: Lift the state up and transformed the icon from stateful composable to a stateless one
 private fun RestaurantIcon(icon: ImageVector,
                            modifier: Modifier,
                            onClick: () -> Unit = { }){
@@ -106,8 +97,6 @@ private fun RestaurantDetails(title: String, description: String,
         Column(modifier = modifier) {
         Text(text = title,
             style = MaterialTheme.typography.h6)
-        // to display the description that's faded out in contrast to the title
-        // the child Text with the restaurant description will be faded or grayed out
         CompositionLocalProvider(
             LocalContentAlpha provides
                     ContentAlpha.medium) {
@@ -117,24 +106,6 @@ private fun RestaurantDetails(title: String, description: String,
     }
 }
 
-///**
-// * Add the favorite icon
-// */
-//@Composable
-//// TODO: Lift the state up and transformed the icon from stateful composable to a stateless one
-//private fun FavoriteIcon(icon: ImageVector,
-//                         modifier: Modifier,
-//                         onClick: () -> Unit) {
-//
-//    Image(
-//        imageVector = icon,
-//        contentDescription = "Favorite restaurant icon",
-//        modifier = modifier.padding(8.dp)
-//            .clickable {
-//                onClick()
-//            }
-//    )
-//}
 
 @Preview(showBackground = true)
 @Composable
