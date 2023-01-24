@@ -1,25 +1,35 @@
 package com.example.restaurants
 
+import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.*
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+
 
 class RestaurantsViewModel(
     private val stateHandle: SavedStateHandle):
     ViewModel() {
 
     // Will call upon to execute the desired network requests
-    private var restInterface: RestaurantsApiServices
+    private var restInterface: RestaurantsApiService
 
-    // to hold a reference to our enqueued Call object
-    private lateinit var restaurantsCall: Call<List<Restaurant>>
 
     val state = mutableStateOf(emptyList<Restaurant>())
+
+    //TODO: define a member variable of type Job and another of type CoroutineScope
+//    val job = Job()
+//    private val scope = CoroutineScope(job +
+//            Dispatchers.IO)
+
+    //TODO: Define an an errorHandler member variable of type CoroutineExceptionHandler
+    private val errorHandler =
+        CoroutineExceptionHandler { _, exception ->
+            exception.printStackTrace()
+        }
 
     //TODO: Executing GET requests to the Firebase REST API
     init {
@@ -33,7 +43,7 @@ class RestaurantsViewModel(
             )
             .build()
         restInterface = retrofit.create(
-            RestaurantsApiServices::class.java
+            RestaurantsApiService::class.java
         )
         getRestaurants()
     }
@@ -68,33 +78,29 @@ class RestaurantsViewModel(
         stateHandle[FAVORITES] = savedToggled
     }
 
+    /**
+     * A method where we can specify the correct
+    dispatcher for our suspending function
+     */
+    private suspend fun getRemoteRestaurants():
+            List<Restaurant> {
+        return withContext(Dispatchers.IO) {
+            restInterface.getRestaurants()
+        }
+    }
+
 
     /**
      * To execute the requests asynchronously and on a separate thread,
      * and also allow us to handle any errors that are thrown by Retrofit.
      */
     private fun getRestaurants() {
-        // Enqueue() runs the network request asynchronously on a separate thread
-        restaurantsCall = restInterface.getRestaurants()
-        restaurantsCall.enqueue(
-            object : Callback<List<Restaurant>> {
-                // invoked when the network request succeeds
-                override fun onResponse(
-                    call: Call<List<Restaurant>>,
-                    response: Response<List<Restaurant>>
-                ) {
-                    //This returns the deserialized body of the HTTP response.
-                    response.body()?.let { restaurants ->
-                        state.value =
-                            restaurants.restoreSelections()
-                    }
-                }
-                override fun onFailure(
-                    call: Call<List<Restaurant>>, t: Throwable
-                ) {
-                    t.printStackTrace()
-                }
-            })
+        //TODO: launched a coroutine that executes our suspending work of
+        // obtaining the restaurants from the server
+        viewModelScope.launch(errorHandler) {
+            val restaurants = getRemoteRestaurants()
+            state.value = restaurants.restoreSelections()
+        }
     }
 
     /**
@@ -114,11 +120,11 @@ class RestaurantsViewModel(
         return this
     }
 
-    // cancel any ongoing work before viewModel is destroyed to prevent memory leak
-    override fun onCleared() {
-        super.onCleared()
-        restaurantsCall.cancel()
-    }
+//    // cancel any ongoing work before viewModel is destroyed to prevent memory leak
+//    override fun onCleared() {
+//        super.onCleared()
+//        job.cancel()
+//    }
 
     companion object {
         const val FAVORITES = "favorites"

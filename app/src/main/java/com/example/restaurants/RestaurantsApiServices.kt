@@ -6,9 +6,9 @@ import retrofit2.http.GET
 /**
  * defines the HTTP operations that are executed between our app and the database
  */
-interface RestaurantsApiServices {
+interface RestaurantsApiService {
     @GET("restaurants.json")
-    // The Call object represents the invocation of a Retrofit method that sends network requests
-    // and receives a response
-    fun getRestaurants(): Call<List<Restaurant>>
+    //TODO: transform the network requests to suspending work that isn't
+    // blocking the main thread of the application
+    suspend fun getRestaurants(): List<Restaurant>
 }

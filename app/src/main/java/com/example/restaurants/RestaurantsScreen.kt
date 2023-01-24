@@ -26,12 +26,6 @@ import com.example.restaurants.ui.theme.RestaurantsTheme
 fun RestaurantsScreen(){
     val viewModel: RestaurantsViewModel = viewModel()
 
-    // trigger the network request to obtain the restaurants from the server
-    //TODO: add a LaunchedEffect to prevent our UI from asking for restaurants from
-    // ViewModel repeatedly on every recomposition
-//    LaunchedEffect(key1 = "request_restaurants") {
-//        viewModel.getRestaurants()
-//    }
 
     LazyColumn(
         contentPadding = PaddingValues(
