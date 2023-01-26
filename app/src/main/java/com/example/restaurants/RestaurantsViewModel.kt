@@ -1,6 +1,5 @@
 package com.example.restaurants
 
-import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -19,11 +18,6 @@ class RestaurantsViewModel(
 
 
     val state = mutableStateOf(emptyList<Restaurant>())
-
-    //TODO: define a member variable of type Job and another of type CoroutineScope
-//    val job = Job()
-//    private val scope = CoroutineScope(job +
-//            Dispatchers.IO)
 
     //TODO: Define an an errorHandler member variable of type CoroutineExceptionHandler
     private val errorHandler =
