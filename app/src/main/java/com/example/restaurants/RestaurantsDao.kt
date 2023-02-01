@@ -10,6 +10,10 @@ interface RestaurantsDao {
     @Query("SELECT * FROM restaurants")
     suspend fun getAll(): List<Restaurant>
 
+    //TODO: get restaurant details
+    @Query("SELECT * FROM restaurants WHERE r_id = :id")
+    suspend fun getRestaurantDetails(id: Int): Restaurant
+
 //    if the restaurants being inserted are already present in the database,
 //    we should replace the old ones with the new ones to refresh our cache
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -21,10 +25,11 @@ interface RestaurantsDao {
 
     //TODO: update the isFavorite field for a list of restaurants instead of only one
     @Update(entity = Restaurant::class)
-    suspend fun updateAll(partialRestaurants:
-                          List<PartialRestaurant>)
+    suspend fun updateAll(partialRestaurants: List<PartialRestaurant>)
 
     //TODO: obtains all the restaurants that have their isFavorite field values equal to 1
     @Query("SELECT * FROM restaurants WHERE is_favorite = 1")
             suspend fun getAllFavorited(): List<Restaurant>
+
+
 }

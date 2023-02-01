@@ -15,27 +15,35 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import retrofit2.HttpException
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.net.ConnectException
+import java.net.UnknownHostException
 
 /**
  * Responsible of requesting restaurant details for the second screen
  */
-class RestaurantDetailsViewModel(
-    private val stateHandle: SavedStateHandle
-): ViewModel() {
+class RestaurantDetailsViewModel(private val stateHandle: SavedStateHandle): ViewModel() {
     private var restInterface: RestaurantsApiService
+
+    //TODO:working on caching those restaurants in our database.
+    private var restaurantsDao = RestaurantsDb
+        .getDaoInstance(RestaurantsApplication.getAppContext())
+
     val state = mutableStateOf<Restaurant?>(null)
 
     init {
         val retrofit: Retrofit = Retrofit.Builder()
             .addConverterFactory(
                 GsonConverterFactory
-                .create())
+                    .create()
+            )
             .baseUrl("https://restaurants-5cacf-default-rtdb.firebaseio.com/")
             .build()
         restInterface = retrofit.create(
-            RestaurantsApiService::class.java)
+            RestaurantsApiService::class.java
+        )
 
         val id = stateHandle.get<Int>("restaurant_id") ?: 0
         viewModelScope.launch {
@@ -51,9 +59,19 @@ class RestaurantDetailsViewModel(
     private suspend fun getRemoteRestaurant(id: Int):
             Restaurant {
         return withContext(Dispatchers.IO) {
-            val responseMap = restInterface
-                .getRestaurant(id)
-            return@withContext responseMap.values.first()
+            try {
+                val responseMap = restInterface.getRestaurant(id)
+                return@withContext responseMap.values.first()
+            } catch (e: Exception) {
+                when (e) {
+                    is UnknownHostException,
+                    is ConnectException,
+                    is HttpException -> {
+                        return@withContext restaurantsDao.getRestaurantDetails(id)
+                    }
+                    else -> throw e
+                }
+            }
         }
     }
 }
