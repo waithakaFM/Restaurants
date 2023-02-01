@@ -34,10 +34,10 @@ fun RestaurantsScreen(onItemClick: (id: Int) -> Unit = {}){
         )
     ) {
         items(viewModel.state.value) { restaurant ->
-            // propagating events through callbacks from child composables to parent composables
+            // propagating events through callbacks from child composable to parent composable
             RestaurantItem(
                 restaurant,
-                onFavoriteClick = { id -> viewModel.toggleFavorite(id) },
+                onFavoriteClick = { id, oldValue -> viewModel.toggleFavorite(id, oldValue) },
                 onItemClick = { id -> onItemClick(id) })
         }
     }
@@ -45,7 +45,7 @@ fun RestaurantsScreen(onItemClick: (id: Int) -> Unit = {}){
 
 @Composable
 fun RestaurantItem(item: Restaurant,
-                   onFavoriteClick: (id: Int) -> Unit,
+                   onFavoriteClick: (id: Int, oldValue: Boolean) -> Unit,
                    onItemClick: (id: Int) -> Unit) {
 
     val icon = if (item.isFavorite)
@@ -71,7 +71,7 @@ fun RestaurantItem(item: Restaurant,
             )
 
             RestaurantIcon(icon, Modifier.weight(0.15f)) {
-                onFavoriteClick(item.id)
+                onFavoriteClick(item.id, item.isFavorite)
             }
         }
     }
@@ -108,12 +108,3 @@ fun RestaurantDetails(title: String, description: String,
         }
     }
 }
-
-
-//@Preview(showBackground = true)
-//@Composable
-//fun DefaultPreview() {
-//    RestaurantsTheme {
-//        RestaurantsScreen()
-//    }
-//}
