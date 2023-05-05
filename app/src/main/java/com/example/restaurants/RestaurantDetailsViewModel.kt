@@ -1,20 +1,12 @@
 package com.example.restaurants
 
-/**
- * Behind the scenes, the Navigation component saves the navigation arguments
-stored in NavStackEntry into SavedStateHandle, which our VM exposes.
-This means that we can take advantage of that, and instead of obtaining the ID of
-the restaurant inside the RestaurantDetailsScreen() composable, we can
-directly obtain it in RestaurantDetailsViewModel.
-This approach will protect us from system-initiated process death scenarios as well.
- */
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -25,53 +17,37 @@ import java.net.UnknownHostException
  * Responsible of requesting restaurant details for the second screen
  */
 class RestaurantDetailsViewModel(private val stateHandle: SavedStateHandle): ViewModel() {
-    private var restInterface: RestaurantsApiService
 
-    //TODO:working on caching those restaurants in our database.
-    private var restaurantsDao = RestaurantsDb
-        .getDaoInstance(RestaurantsApplication.getAppContext())
+    private val repository = RestaurantsRepository()
 
-    val state = mutableStateOf<Restaurant?>(null)
+    val _state = mutableStateOf(
+        RestaurantDetailsState(
+            restaurant = null,
+            title = null,
+            description = null
+        )
+    )
+
+    val state: State<RestaurantDetailsState>
+        get() = _state
+
+    private val errorHandler =
+        CoroutineExceptionHandler { _, exception ->
+            exception.printStackTrace()
+            _state.value = _state.value.copy(
+                error = exception.message,
+                isLoading = false
+            )
+        }
 
     init {
-        val retrofit: Retrofit = Retrofit.Builder()
-            .addConverterFactory(
-                GsonConverterFactory
-                    .create()
-            )
-            .baseUrl("https://restaurants-5cacf-default-rtdb.firebaseio.com/")
-            .build()
-        restInterface = retrofit.create(
-            RestaurantsApiService::class.java
-        )
-
         val id = stateHandle.get<Int>("restaurant_id") ?: 0
-        viewModelScope.launch {
-            val restaurant = getRemoteRestaurant(id)
-            state.value = restaurant
-        }
-    }
-
-    /**
-     * Receives an id parameter and takes care of executing the network
-    request to get the details of a specific restaurant
-     */
-    private suspend fun getRemoteRestaurant(id: Int):
-            Restaurant {
-        return withContext(Dispatchers.IO) {
-            try {
-                val responseMap = restInterface.getRestaurant(id)
-                return@withContext responseMap.values.first()
-            } catch (e: Exception) {
-                when (e) {
-                    is UnknownHostException,
-                    is ConnectException,
-                    is HttpException -> {
-                        return@withContext restaurantsDao.getRestaurantDetails(id)
-                    }
-                    else -> throw e
-                }
-            }
+        viewModelScope.launch(errorHandler) {
+            val restaurant = repository.getRemoteRestaurant(id)
+            _state.value = _state.value.copy(
+                restaurant = restaurant,
+                isLoading = false
+            )
         }
     }
 }
